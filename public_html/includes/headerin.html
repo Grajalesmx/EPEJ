@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title><?php echo $page_title; ?></title>	
+	<link rel="stylesheet" href="includes/stylein.css" type="text/css" media="screen" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+     <link rel="shortcut icon" href="images/favicon.ico" >
+     <link rel="icon" href="images/animated_favicon.gif" type="image/gif" >
+
+</head>
+
+<body>
+	<div id="header">
+	  <h1><img src="../../images/Profile.jpg" alt="Profile" width="96" height="95" align="left" />Encuentro de Programas Evangelistidos de Jovenes</h1>
+		<h2>Tampico 2014</h2>
+	</div>
+
+	<div id="navigation">
+		<ul>
+		<li><a href="register_view.php">Registros Pago Pendiente</a></li>
+		<li><a href="payments_view.php">Pagos</a></li>
+        <li><a href="arrivals_view.php">Llegadas / Salidas</a></li>
+		<li><?php // Create a login/logout link:
+			if (isset($_SESSION['user_id'])) {
+				echo '<a href="logout.php">Logout</a>';
+			} else {
+				echo '<a href="login.php">Staff</a>';}?></li>
+		</ul>
+	</div>
+	
+	<div id="content">
+<!-- Start of the page-specific content. -->

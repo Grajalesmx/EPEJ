@@ -1,0 +1,163 @@
+<?php # Script 10.5 - #5
+// This script retrieves all the records from the users table.
+// This new version allows the results to be sorted in different ways.
+// The user is redirected here from login.php.
+
+session_start(); // Start the session.
+
+// If no session value is present, redirect the user:
+// Also validate the HTTP_USER_AGENT!
+if (!isset($_SESSION['agent']) OR ($_SESSION['agent'] != md5($_SERVER['HTTP_USER_AGENT']) )) {
+
+	// Need the functions:
+	require ('includes/login_functions.inc.php');
+	redirect_user();	
+
+}
+$page_title = 'Pagos Recibidos';
+include ('includes/headerin.html');
+echo '<h1>Asistentes Registrados</h1>';
+
+
+require ('../MySQL_Connect.php');
+
+// Number of records to show per page:
+$display = 50;
+
+// Determine how many pages there are...
+if (isset($_GET['p']) && is_numeric($_GET['p'])) { // Already been determined.
+	$pages = $_GET['p'];
+} else { // Need to determine.
+ 	// Count the number of records:
+	$q = "SELECT COUNT(array_id) FROM arrivals";
+	$r = @mysqli_query ($dbc, $q);
+	$row = @mysqli_fetch_array ($r, MYSQLI_NUM);
+	$records = $row[0];
+	// Calculate the number of pages...
+	if ($records > $display) { // More than 1 page.
+		$pages = ceil ($records/$display);
+	} else {
+		$pages = 1;
+	}
+} // End of p IF.
+
+// Determine where in the database to start returning results...
+if (isset($_GET['s']) && is_numeric($_GET['s'])) {
+	$start = $_GET['s'];
+} else {
+	$start = 0;
+}
+
+// Determine the sort...
+// Default is by registration date.
+$sort = (isset($_GET['sort'])) ? $_GET['sort'] : 'rd';
+
+// Determine the sorting order:
+switch ($sort) {
+	case 'ln':
+		$order_by = 'last_name ASC';
+		break;
+	case 'fn':
+		$order_by = 'first_name ASC';
+		break;
+	case 'com':
+		$order_by = 'community ASC';
+		break;
+	case 'pay':
+		$order_by = 'payment ASC';
+		break;
+	default:
+		$order_by = 'registration_date ASC';
+		$sort = 'rd';
+		break;
+}
+	
+// Define the query:
+$q = "SELECT array_id, first_name, last_name, community, ar_date, ar_type, ar_city, ar_line, ar_trip, dep_date, dep_type, dep_line, dep_trip, 
+DATE_FORMAT(registration_date, '%M %d, %Y') AS dr FROM arrivals_v ORDER BY $order_by LIMIT $start, $display";		
+
+$r = @mysqli_query ($dbc, $q); // Run the query.
+
+// Table header:
+echo '<table align="center" cellspacing="0" cellpadding="5" width="100%">
+<tr>
+	<td align="left"><b>Edit</b></td>
+	<td align="left"><b>Delete</b></td>
+	<td align="left"><b><a href="payments_view.php?sort=fn">Nombre</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=ln">Apellido</a></b></td>
+	<td align="center"><b><a href="payments_view.php?sort=com">Comunidad</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=pay">Fecha Llegada</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=tic">Medio Llegada</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=tic">Ciudad de Salida</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=rd">Linea Llegada</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=rd">No. Viaje de Llegada</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=pay">Fecha Salida</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=tic">Medio Salida</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=rd">Linea Salida</a></b></td>
+	<td align="left"><b><a href="payments_view.php?sort=rd">No. Viaje de Salida</a></b></td>
+</tr>
+';
+
+// Fetch and print all the records....
+$bg = '#eeeeee'; 
+while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
+	$bg = ($bg=='#eeeeee' ? '#ffffff' : '#eeeeee');
+		echo '<tr bgcolor="' . $bg . '">
+		<td align="left"><a href="payments_delete.php?id=' . $row['payment_id'] . '">Edit</a></td>
+		<td align="left"><a href="payments_delete.php?id=' . $row['payment_id'] . '">Delete</a></td>
+		<td align="left">' . $row['first_name'] . '</td>
+		<td align="left">' . $row['last_name'] . '</td>
+		<td align="left">' . $row['community'] . '</td>
+
+
+		<td align="left">' . $row['ar_date'] . '</td>
+		<td align="left">' . $row['ar_type'] . '</td>
+		<td align="left">' . $row['ar_city'] . '</td>
+		<td align="left">' . $row['ar_line'] . '</td>
+		<td align="left">' . $row['ar_trip'] . '</td>
+		
+		<td align="left">' . $row['dep_date'] . '</td>
+		<td align="left">' . $row['dep_type'] . '</td>
+		<td align="left">' . $row['dep_line'] . '</td>
+		<td align="left">' . $row['dep_trip'] . '</td>
+		
+		<td align="left">' . $row['dr'] . '</td>
+	</tr>
+	';
+} // End of WHILE loop.
+
+echo '</table>';
+mysqli_free_result ($r);
+mysqli_close($dbc);
+
+// Make the links to other pages, if necessary.
+if ($pages > 1) {
+	
+	echo '<br /><p>';
+	$current_page = ($start/$display) + 1;
+	
+	// If it's not the first page, make a Previous button:
+	if ($current_page != 1) {
+		echo '<a href="payments_view.php?s=' . ($start - $display) . '&p=' . $pages . '&sort=' . $sort . '">Previous</a> ';
+	}
+	
+	// Make all the numbered pages:
+	for ($i = 1; $i <= $pages; $i++) {
+		if ($i != $current_page) {
+			echo '<a href="payments_view.php?s=' . (($display * ($i - 1))) . '&p=' . $pages . '&sort=' . $sort . '">' . $i . '</a> ';
+		} else {
+			echo $i . ' ';
+		}
+	} // End of FOR loop.
+	
+	// If it's not the last page, make a Next button:
+	if ($current_page != $pages) {
+		echo '<a href="payments_view.php?s=' . ($start + $display) . '&p=' . $pages . '&sort=' . $sort . '">Next</a>';
+	}
+	
+	echo '</p>'; // Close the paragraph.
+	
+} // End of links section.
+	
+include ('includes/footer.html');
+?>
